@@ -1,0 +1,82 @@
+[
+  {
+    "ticker": "418660.KS",
+    "name": "Mirae Asset Tiger Synth-Nasdaq 100 Leverage Etf",
+    "current_price": 27470.0,
+    "sepa_score": 46.785033781411336,
+    "monthly_return": 3.523648012059555,
+    "quarterly_return": 12.191137431080247
+  },
+  {
+    "ticker": "471040.KS",
+    "name": "Samsung Investment Trust Management Co. Ltd - KoAct Global AI and Robotics Active ETF",
+    "current_price": 16500.0,
+    "sepa_score": 45.48894835611149,
+    "monthly_return": 5.330354293009898,
+    "quarterly_return": 8.982826948480849
+  },
+  {
+    "ticker": "409820.KS",
+    "name": "Samsung Investment Trust Management Co. Ltd - Samsung Kodex US Nasdaq100 Leverage ETF(SYNTH H) Fund",
+    "current_price": 12710.0,
+    "sepa_score": 45.35963319282809,
+    "monthly_return": 4.052394596807196,
+    "quarterly_return": 2.41740531829171
+  },
+  {
+    "ticker": "144600.KS",
+    "name": "Kodex Silver Futures Special Asset ETF",
+    "current_price": 5765.0,
+    "sepa_score": 43.71484835841264,
+    "monthly_return": 5.200729927007308,
+    "quarterly_return": 1.6754850088183337
+  },
+  {
+    "ticker": "483340.KS",
+    "name": "Kim Ace Google Value Chain Active ETF",
+    "current_price": 11470.0,
+    "sepa_score": 38.04973315895401,
+    "monthly_return": 5.181109582760213,
+    "quarterly_return": 5.811808118081174
+  },
+  {
+    "ticker": "133690.KS",
+    "name": "Mirae Asset TIGER USA NASDAQ 100 ETF",
+    "current_price": 140135.0,
+    "sepa_score": 36.456084922358215,
+    "monthly_return": 2.0046208162380452,
+    "quarterly_return": 6.6484270598456074
+  },
+  {
+    "ticker": "091160.KS",
+    "name": "Kodex Semicon",
+    "current_price": 33755.0,
+    "sepa_score": 35.636914749755476,
+    "monthly_return": 2.2414054217779755,
+    "quarterly_return": 10.022816166883963
+  },
+  {
+    "ticker": "394350.KS",
+    "name": "Kiwoom Asset Management - Kiwoom KOSEF Global Future Mobility ETF",
+    "current_price": 11955.0,
+    "sepa_score": 32.4769347925415,
+    "monthly_return": -0.7059800664451776,
+    "quarterly_return": 0.37783375314861534
+  },
+  {
+    "ticker": "472160.KS",
+    "name": "Mirae ASset Tiger Us Tech top10 Indxx ETF",
+    "current_price": 14935.0,
+    "sepa_score": 32.089783358583816,
+    "monthly_return": -1.808021038790275,
+    "quarterly_return": 2.540336422931677
+  },
+  {
+    "ticker": "487240.KS",
+    "name": "Samsung Kodex Ai Electric Power Core Facilities Etf",
+    "current_price": 10760.0,
+    "sepa_score": 29.06112175265512,
+    "monthly_return": 6.9051167411823045,
+    "quarterly_return": 7.546226886556728
+  }
+]
