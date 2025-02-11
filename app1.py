@@ -640,6 +640,7 @@ def save_top_etfs_to_json(df_results):
         raise Exception(f"파일 저장 중 오류: {str(e)}")
 
 
+
 def main():
     st.title("국내 ETF SEPA 전략 분석 대시보드 📈")
     st.markdown("---")
@@ -693,6 +694,16 @@ def main():
         df_results = st.session_state["analyzed_results"]
         top_10_etfs = df_results.head(10)
 
+        # JSON 다운로드 버튼
+        if st.button("상위 10개 ETF 저장"):
+            json_str = top_10_etfs.to_json(orient='records', force_ascii=False)
+            st.download_button(
+                label="JSON 파일 다운로드",
+                data=json_str,
+                file_name="top_10_etfs.json",
+                mime="application/json"
+            )
+
         # 상위 10개 ETF 표시
         st.subheader("🏆 SEPA 전략 상위 10개 ETF")
 
@@ -723,22 +734,21 @@ def main():
                     "SEPA 점수": f"{etf_data['SEPA_점수']:.1f}점",
                     "1개월수익률": f"{etf_data['1개월수익률']:.2f}%",
                     "3개월수익률": f"{etf_data['3개월수익률']:.2f}%",
-                    "6개월수익률": f"{etf_data['6개월수익률']:.2f}%"
+                    "6개월수익률": f"{etf_data['6개월수익률']:.2f}%",
                 }
 
                 for key, value in metrics.items():
                     st.metric(key, value)
 
-                # SEPA 조건 테이블
+                # SEPA 조건 테이블을 Plotly로 표시
+                st.markdown("#### 💡 SEPA 전략 조건")
                 if isinstance(etf_data["SEPA_조건"], dict):
-                    st.markdown("#### 💡 SEPA 전략 조건")
                     condition_data = pd.DataFrame({
                         "조건": list(etf_data["SEPA_조건"].keys()),
                         "충족여부": ["✅" if v else "❌" 
                                    for v in etf_data["SEPA_조건"].values()]
                     })
                     
-                    # Plotly table로 SEPA 조건 표시
                     fig = go.Figure(data=[go.Table(
                         header=dict(
                             values=list(condition_data.columns),
@@ -760,12 +770,18 @@ def main():
         st.subheader("📋 SEPA 전략 상위 10개 ETF 목록")
 
         display_cols = [
-            "티커", "ETF명", "현재가", "SEPA_점수",
-            "1개월수익률", "3개월수익률", "6개월수익률"
+            "티커",
+            "ETF명",
+            "현재가",
+            "SEPA_점수",
+            "1개월수익률",
+            "3개월수익률",
+            "6개월수익률",
         ]
-        display_df = top_10_etfs[display_cols].copy()
-
+        
         # Plotly table로 변경
+        display_df = top_10_etfs[display_cols].copy()
+        
         fig = go.Figure(data=[go.Table(
             header=dict(
                 values=list(display_df.columns),
@@ -778,13 +794,12 @@ def main():
                 fill_color=['white'],
                 align='left',
                 font=dict(color='darkslategray', size=11),
-                format=[None, None, ",.0f", ".1f", ".2f", ".2f", ".2f"]
+                format=[None, None, ",.0f", ".1f", ".2f", ".2f", ".2f"]  # 각 컬럼의 포맷 지정
             )
         )])
         fig.update_layout(margin=dict(l=0, r=0, t=0, b=0))
         st.plotly_chart(fig, use_container_width=True)
 
-        # 차트 재분석 버튼
-        if st.button("ETF 재분석"):
-            st.session_state["analyzed_results"] = None
-            st.experimental_rerun()
+
+if __name__ == "__main__":
+    main()
