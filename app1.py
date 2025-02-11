@@ -648,28 +648,75 @@ def main():
     if "analyzed_results" not in st.session_state:
         st.session_state["analyzed_results"] = None
 
+    # 분석 시작 버튼
+    if st.session_state["analyzed_results"] is None:
+        if st.button("ETF 분석 시작"):
+            with st.spinner("ETF 분석 중..."):
+                start_time = time.time()
+
+                # ETF 리스트 가져오기
+                tickers = get_top_kr_etfs()
+                if not tickers:
+                    st.error("ETF 리스트를 가져오는데 실패했습니다.")
+                    return
+
+                # 멀티스레딩으로 병렬 처리
+                analyzed_etfs = []
+                progress_bar = st.progress(0)
+
+                with ThreadPoolExecutor(max_workers=10) as executor:
+                    future_to_etf = {
+                        executor.submit(analyze_etf, ticker): ticker
+                        for ticker in tickers
+                    }
+
+                    completed = 0
+                    for future in future_to_etf:
+                        result = future.result()
+                        if result is not None:
+                            analyzed_etfs.append(result)
+                        completed += 1
+                        progress_bar.progress(completed / len(tickers))
+
+                if analyzed_etfs:
+                    df_results = pd.DataFrame(analyzed_etfs)
+                    df_results = df_results.sort_values("SEPA_점수", ascending=False)
+                    st.session_state["analyzed_results"] = df_results
+                    end_time = time.time()
+                    st.success(f"분석 완료! 실행 시간: {end_time - start_time:.2f}초")
+                else:
+                    st.error("분석 가능한 ETF가 없습니다.")
+                    return
+
     # 분석 결과가 있는 경우 표시
     if st.session_state["analyzed_results"] is not None:
         df_results = st.session_state["analyzed_results"]
         top_10_etfs = df_results.head(10)
 
-        # ETF 선택 부분
+        # 상위 10개 ETF 표시
         st.subheader("🏆 SEPA 전략 상위 10개 ETF")
-        etf_options = [f"{row['티커']} - {row['ETF명']}" 
-                      for _, row in top_10_etfs.iterrows()]
+
+        # 선택 가능한 ETF 목록 생성
+        etf_options = [
+            f"{row['티커']} - {row['ETF명']}" for _, row in top_10_etfs.iterrows()
+        ]
+
         selected_etf = st.selectbox("분석할 ETF 선택", etf_options)
 
         if selected_etf:
+            # 선택된 ETF의 티커 추출
             selected_ticker = selected_etf.split(" - ")[0]
             etf_data = df_results[df_results["티커"] == selected_ticker].iloc[0]
 
             col1, col2 = st.columns([3, 1])
 
             with col1:
+                # 차트 표시
                 chart = create_etf_chart(etf_data["ETF명"], etf_data["차트데이터"])
                 st.plotly_chart(chart, use_container_width=True)
 
             with col2:
+                # ETF 정보 표시
                 st.subheader("📊 ETF 정보")
                 metrics = {
                     "현재가": f"₩{etf_data['현재가']:,.0f}",
@@ -737,5 +784,7 @@ def main():
         fig.update_layout(margin=dict(l=0, r=0, t=0, b=0))
         st.plotly_chart(fig, use_container_width=True)
 
-if __name__ == "__main__":
-    main()
+        # 차트 재분석 버튼
+        if st.button("ETF 재분석"):
+            st.session_state["analyzed_results"] = None
+            st.experimental_rerun()
