@@ -4,9 +4,7 @@ import yfinance as yf
 import plotly.express as px
 import plotly.graph_objects as go
 from concurrent.futures import ThreadPoolExecutor
-from datetime import datetime  # 수정된 부분
 import time
-import json
 import numpy as np
 
 # 페이지 기본 설정
@@ -361,7 +359,7 @@ def calculate_additional_indicators(df):
 
 
 def create_etf_chart(ticker, df):
-    """ETF 차트를 생성합니다."""
+    """ETF 차트를 Plotly로 생성"""
     fig = go.Figure()
 
     # 캔들스틱 차트
@@ -372,66 +370,69 @@ def create_etf_chart(ticker, df):
             high=df["High"],
             low=df["Low"],
             close=df["Close"],
-            name="가격",
+            name="가격"
         )
     )
 
-    # 사용 가능한 이동평균선 추가
-    ma_colors = {"MA5": "purple", "MA20": "blue", "MA50": "green", "MA200": "red"}
+    # 이동평균선
+    ma_periods = {
+        "MA5": (5, "purple"),
+        "MA20": (20, "blue"),
+        "MA50": (50, "green"),
+        "MA200": (200, "red")
+    }
 
-    for ma, color in ma_colors.items():
-        if ma in df.columns:  # 해당 컬럼이 있는 경우에만 추가
-            fig.add_trace(
-                go.Scatter(x=df.index, y=df[ma], name=ma, line=dict(color=color))
-            )
-
-    # 볼린저 밴드 추가 (있는 경우에만)
-    if "Upper_band" in df.columns and "Lower_band" in df.columns:
+    for ma_name, (period, color) in ma_periods.items():
+        ma = df["Close"].rolling(window=period).mean()
         fig.add_trace(
             go.Scatter(
                 x=df.index,
-                y=df["Upper_band"],
-                name="상단밴드",
-                line=dict(color="gray", dash="dash"),
+                y=ma,
+                name=ma_name,
+                line=dict(color=color)
             )
         )
 
-        fig.add_trace(
-            go.Scatter(
-                x=df.index,
-                y=df["Lower_band"],
-                name="하단밴드",
-                line=dict(color="gray", dash="dash"),
-                fill="tonexty",
-            )
-        )
-
-    # 거래량 차트 추가
+    # 거래량 차트
+    colors = ['red' if row['Close'] < row['Open'] else 'green' 
+              for i, row in df.iterrows()]
+    
     fig.add_trace(
         go.Bar(
             x=df.index,
             y=df["Volume"],
             name="거래량",
-            yaxis="y2",
-            marker_color="lightgray",
+            marker_color=colors,
             opacity=0.5,
+            yaxis="y2"
         )
     )
 
-    # 차트 레이아웃 설정
+    # 차트 레이아웃
     fig.update_layout(
         title=f"{ticker} 가격 차트",
         yaxis_title="가격",
         xaxis_title="날짜",
         height=600,
+        yaxis2=dict(
+            title="거래량",
+            overlaying="y",
+            side="right",
+            showgrid=False
+        ),
+        xaxis_rangeslider_visible=False,
         template="plotly_white",
-        yaxis2=dict(title="거래량", overlaying="y", side="right", showgrid=False),
         showlegend=True,
-        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=1.02,
+            xanchor="right",
+            x=1
+        )
     )
 
     return fig
-
 
 def check_sepa_conditions_etf(df):
     """향상된 SEPA 전략 조건 확인 함수"""
@@ -484,39 +485,54 @@ def check_sepa_conditions_etf(df):
         st.error(f"SEPA 조건 체크 중 오류 발생: {str(e)}")
         return 0, {}
 
-
 def display_sepa_etfs(df_results):
     """SEPA ETF 표시 함수 업데이트"""
     st.subheader("🎯 SEPA 전략 기반 ETF 분석")
 
     # SEPA 점수 기준 정렬
     df_results = df_results.sort_values("SEPA_점수", ascending=False)
-    top_10_etfs = df_results.head(10)
+    top_etfs = df_results.head(15)
 
-    # 상위 10개 ETF 테이블 표시
-    st.markdown("### 📊 상위 10개 추천 ETF")
+    col1, col2 = st.columns([2, 1])
 
-    display_df = top_10_etfs[
-        ["ETF명", "현재가", "SEPA_점수", "1개월수익률", "3개월수익률", "1년수익률"]
-    ].copy()
+    with col1:
+        st.markdown("### 📊 상위 추천 ETF")
+        display_df = top_etfs[
+            ["ETF명", "현재가", "SEPA_점수", "1개월수익률", "3개월수익률", "1년수익률"]
+        ].copy()
 
-    # 스타일이 적용된 데이터프레임 표시
-    styled_df = display_df.style.background_gradient(
-        subset=["SEPA_점수"], cmap="RdYlGn"
-    ).format(
-        {
-            "현재가": "{:,.0f}₩",
-            "SEPA_점수": "{:.1f}",
-            "1개월수익률": "{:.2f}%",
-            "3개월수익률": "{:.2f}%",
-            "1년수익률": "{:.2f}%",
-        }
-    )
+        # Plotly table로 변경
+        fig = go.Figure(data=[go.Table(
+            header=dict(
+                values=list(display_df.columns),
+                fill_color='royalblue',
+                align='left',
+                font=dict(color='white', size=12)
+            ),
+            cells=dict(
+                values=[display_df[col] for col in display_df.columns],
+                fill_color=['white'],
+                align='left',
+                font=dict(color='darkslategray', size=11),
+                format=[None, ",.0f", ".1f", ".2f", ".2f", ".2f"]
+            )
+        )])
+        fig.update_layout(margin=dict(l=0, r=0, t=0, b=0))
+        st.plotly_chart(fig, use_container_width=True)
 
-    st.dataframe(styled_df, use_container_width=True)
+    with col2:
+        st.markdown("### 💡 ETF 유형 분석")
+        etf_types = pd.Series(
+            [etf_name.split()[0] for etf_name in top_etfs["ETF명"]]
+        ).value_counts()
 
-    # 상위 3개 ETF 상세 분석 표시
-    display_top_etf_recommendations(df_results)
+        fig = px.pie(
+            values=etf_types.values,
+            names=etf_types.index,
+            title="상위 ETF 운용사 분포"
+        )
+        st.plotly_chart(fig)
+
 
 
 def detect_double_bottom(df, threshold=0.05):  # threshold를 5%로 완화
