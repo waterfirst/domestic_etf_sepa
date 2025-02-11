@@ -772,28 +772,7 @@ def main():
                     )
                     
                     st.plotly_chart(fig, use_container_width=True)
-                if isinstance(etf_data["SEPA_조건"], dict):
-                    condition_data = pd.DataFrame({
-                        "조건": list(etf_data["SEPA_조건"].keys()),
-                        "충족여부": ["✅" if v else "❌" 
-                                   for v in etf_data["SEPA_조건"].values()]
-                    })
-                    
-                    fig = go.Figure(data=[go.Table(
-                        header=dict(
-                            values=list(condition_data.columns),
-                            fill_color='royalblue',
-                            align='left',
-                            font=dict(color='white')
-                        ),
-                        cells=dict(
-                            values=[condition_data[col] for col in condition_data.columns],
-                            fill_color=['white'],
-                            align='left'
-                        )
-                    )])
-                    fig.update_layout(margin=dict(l=0, r=0, t=0, b=0))
-                    st.plotly_chart(fig, use_container_width=True)
+               
 
         # 상위 10개 ETF 테이블
         st.markdown("---")
