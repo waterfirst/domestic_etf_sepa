@@ -95,6 +95,6 @@ streamlit run app2.py
 
 ## 서비스 주소
 
-국내 ETF 분석_추천 - (https://domesticetfsepa-2l5qz9n84k5iu2betf4frb.streamlit.app/)
+국내 ETF 분석_추천 : https://domesticetfsepa-2l5qz9n84k5iu2betf4frb.streamlit.app/
 
-ETF 백테스팅 서비스- [https://domestic-etfsepa-backtest.streamlit.app/]
+ETF 백테스팅 서비스 : https://domestic-etfsepa-backtest.streamlit.app/
