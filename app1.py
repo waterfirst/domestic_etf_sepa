@@ -648,150 +648,94 @@ def main():
     if "analyzed_results" not in st.session_state:
         st.session_state["analyzed_results"] = None
 
-    # 분석 시작 버튼
-    if st.session_state["analyzed_results"] is None:
-        if st.button("ETF 분석 시작"):
-            with st.spinner("ETF 분석 중..."):
-                start_time = time.time()
-
-                # ETF 리스트 가져오기
-                tickers = get_top_kr_etfs()
-                if not tickers:
-                    st.error("ETF 리스트를 가져오는데 실패했습니다.")
-                    return
-
-                # 멀티스레딩으로 병렬 처리
-                analyzed_etfs = []
-                progress_bar = st.progress(0)
-
-                with ThreadPoolExecutor(max_workers=10) as executor:
-                    future_to_etf = {
-                        executor.submit(analyze_etf, ticker): ticker
-                        for ticker in tickers
-                    }
-
-                    completed = 0
-                    for future in future_to_etf:
-                        result = future.result()
-                        if result is not None:
-                            analyzed_etfs.append(result)
-                        completed += 1
-                        progress_bar.progress(completed / len(tickers))
-
-                if analyzed_etfs:
-                    df_results = pd.DataFrame(analyzed_etfs)
-                    df_results = df_results.sort_values("SEPA_점수", ascending=False)
-                    st.session_state["analyzed_results"] = df_results
-                    end_time = time.time()
-                    st.success(f"분석 완료! 실행 시간: {end_time - start_time:.2f}초")
-                else:
-                    st.error("분석 가능한 ETF가 없습니다.")
-                    return
-
     # 분석 결과가 있는 경우 표시
     if st.session_state["analyzed_results"] is not None:
         df_results = st.session_state["analyzed_results"]
         top_10_etfs = df_results.head(10)
 
-        # JSON 저장 버튼 추가
-        if st.button("상위 10개 ETF 저장 (JSON)"):
-            try:
-                filename = save_top_etfs_to_json(df_results)
-                st.success(f"저장 완료! 파일명: {filename}")
-
-                # 다운로드 버튼 추가
-                with open(filename, "r", encoding="utf-8") as f:
-                    json_data = f.read()
-                    st.download_button(
-                        label="JSON 파일 다운로드",
-                        data=json_data,
-                        file_name=filename,
-                        mime="application/json",
-                    )
-            except Exception as e:
-                st.error(f"저장 중 오류 발생: {str(e)}")
-
-        # 상위 10개 ETF 표시
+        # ETF 선택 부분
         st.subheader("🏆 SEPA 전략 상위 10개 ETF")
-
-        # 선택 가능한 ETF 목록 생성
-        etf_options = [
-            f"{row['티커']} - {row['ETF명']}" for _, row in top_10_etfs.iterrows()
-        ]
-
+        etf_options = [f"{row['티커']} - {row['ETF명']}" 
+                      for _, row in top_10_etfs.iterrows()]
         selected_etf = st.selectbox("분석할 ETF 선택", etf_options)
 
         if selected_etf:
-            # 선택된 ETF의 티커 추출
             selected_ticker = selected_etf.split(" - ")[0]
             etf_data = df_results[df_results["티커"] == selected_ticker].iloc[0]
 
             col1, col2 = st.columns([3, 1])
 
             with col1:
-                # 차트 표시
                 chart = create_etf_chart(etf_data["ETF명"], etf_data["차트데이터"])
                 st.plotly_chart(chart, use_container_width=True)
 
             with col2:
-                # ETF 정보 표시
                 st.subheader("📊 ETF 정보")
                 metrics = {
                     "현재가": f"₩{etf_data['현재가']:,.0f}",
                     "SEPA 점수": f"{etf_data['SEPA_점수']:.1f}점",
                     "1개월수익률": f"{etf_data['1개월수익률']:.2f}%",
                     "3개월수익률": f"{etf_data['3개월수익률']:.2f}%",
-                    "6개월수익률": f"{etf_data['6개월수익률']:.2f}%",
+                    "6개월수익률": f"{etf_data['6개월수익률']:.2f}%"
                 }
 
                 for key, value in metrics.items():
                     st.metric(key, value)
 
-                # SEPA 조건 충족 현황
-                st.markdown("#### 💡 SEPA 전략 조건")
+                # SEPA 조건 테이블
                 if isinstance(etf_data["SEPA_조건"], dict):
-                    conditions_df = pd.DataFrame(
-                        {
-                            "조건": etf_data["SEPA_조건"].keys(),
-                            "충족여부": [
-                                "✅" if v else "❌"
-                                for v in etf_data["SEPA_조건"].values()
-                            ],
-                        }
-                    )
-                    st.dataframe(conditions_df)
+                    st.markdown("#### 💡 SEPA 전략 조건")
+                    condition_data = pd.DataFrame({
+                        "조건": list(etf_data["SEPA_조건"].keys()),
+                        "충족여부": ["✅" if v else "❌" 
+                                   for v in etf_data["SEPA_조건"].values()]
+                    })
+                    
+                    # Plotly table로 SEPA 조건 표시
+                    fig = go.Figure(data=[go.Table(
+                        header=dict(
+                            values=list(condition_data.columns),
+                            fill_color='royalblue',
+                            align='left',
+                            font=dict(color='white')
+                        ),
+                        cells=dict(
+                            values=[condition_data[col] for col in condition_data.columns],
+                            fill_color=['white'],
+                            align='left'
+                        )
+                    )])
+                    fig.update_layout(margin=dict(l=0, r=0, t=0, b=0))
+                    st.plotly_chart(fig, use_container_width=True)
 
         # 상위 10개 ETF 테이블
         st.markdown("---")
         st.subheader("📋 SEPA 전략 상위 10개 ETF 목록")
 
         display_cols = [
-            "티커",
-            "ETF명",
-            "현재가",
-            "SEPA_점수",
-            "1개월수익률",
-            "3개월수익률",
-            "6개월수익률",
+            "티커", "ETF명", "현재가", "SEPA_점수",
+            "1개월수익률", "3개월수익률", "6개월수익률"
         ]
+        display_df = top_10_etfs[display_cols].copy()
 
-        # 스타일이 적용된 데이터프레임 표시
-        styled_df = (
-            top_10_etfs[display_cols]
-            .style.background_gradient(subset=["SEPA_점수"], cmap="RdYlGn")
-            .format(
-                {
-                    "현재가": "{:,.0f}₩",
-                    "SEPA_점수": "{:.1f}",
-                    "1개월수익률": "{:.2f}%",
-                    "3개월수익률": "{:.2f}%",
-                    "6개월수익률": "{:.2f}%",
-                }
+        # Plotly table로 변경
+        fig = go.Figure(data=[go.Table(
+            header=dict(
+                values=list(display_df.columns),
+                fill_color='royalblue',
+                align='left',
+                font=dict(color='white', size=12)
+            ),
+            cells=dict(
+                values=[display_df[col] for col in display_df.columns],
+                fill_color=['white'],
+                align='left',
+                font=dict(color='darkslategray', size=11),
+                format=[None, None, ",.0f", ".1f", ".2f", ".2f", ".2f"]
             )
-        )
-
-        st.dataframe(styled_df, use_container_width=True)
-
+        )])
+        fig.update_layout(margin=dict(l=0, r=0, t=0, b=0))
+        st.plotly_chart(fig, use_container_width=True)
 
 if __name__ == "__main__":
     main()
