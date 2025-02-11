@@ -93,8 +93,8 @@ streamlit run app2.py
 4. Branch에 Push 합니다 (`git push origin feature/AmazingFeature`).
 5. Pull Request를 생성합니다.
 
-## 연락처
+## 서비스 주소
 
-프로젝트 관리자 - [@your_twitter](https://twitter.com/your_twitter) - email@example.com
+국내 ETF 분석_추천 - (https://domesticetfsepa-2l5qz9n84k5iu2betf4frb.streamlit.app/)
 
-프로젝트 링크: [https://github.com/yourusername/yo
+ETF 백테스팅 서비스- [https://domestic-etfsepa-backtest.streamlit.app/]
