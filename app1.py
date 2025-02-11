@@ -751,6 +751,36 @@ def main():
                     
                     fig = go.Figure(data=[go.Table(
                         header=dict(
+                            values=["<b>조건</b>", "<b>충족여부</b>"],  # 볼드체 적용
+                            fill_color='royalblue',
+                            align='center',  # 중앙 정렬
+                            font=dict(color='white', size=14)
+                        ),
+                        cells=dict(
+                            values=[condition_data["조건"], condition_data["충족여부"]],
+                            fill_color=['white', 'white'],
+                            align=['left', 'center'],  # 조건은 왼쪽, 충족여부는 중앙 정렬
+                            font=dict(color=['black', 'black'], size=13),  # 글자색 검정으로 명시
+                            height=30  # 셀 높이 조정
+                        )
+                    )])
+                    
+                    # 테이블 레이아웃 설정
+                    fig.update_layout(
+                        margin=dict(l=0, r=0, t=0, b=0),
+                        height=len(condition_data) * 35 + 40  # 데이터 행 수에 따라 높이 자동 조정
+                    )
+                    
+                    st.plotly_chart(fig, use_container_width=True)
+                if isinstance(etf_data["SEPA_조건"], dict):
+                    condition_data = pd.DataFrame({
+                        "조건": list(etf_data["SEPA_조건"].keys()),
+                        "충족여부": ["✅" if v else "❌" 
+                                   for v in etf_data["SEPA_조건"].values()]
+                    })
+                    
+                    fig = go.Figure(data=[go.Table(
+                        header=dict(
                             values=list(condition_data.columns),
                             fill_color='royalblue',
                             align='left',
